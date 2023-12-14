@@ -10,22 +10,6 @@ This is the Pytorch implementation of our TIP 2021 paper [JigsawGAN](https://lir
 * Pytorch
 * Other requirements please refer to requirements.txt.
 
-
-## Pre-trained models
-
-The pre-trained models can be downloaded [here](https://drive.google.com/).
-
-## Training
-``` 
-python3 train.py
-```
-
-## Testing
-
-```
-python3 test.py
-```
-
 ## Results
 
 ![image](./figs/results.png)
