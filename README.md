@@ -6,7 +6,6 @@ This is the Pytorch implementation of our TIP 2021 paper [JigsawGAN](https://lir
 
 ## Dependencies
 
-* Python
 * Pytorch
 * Other requirements please refer to requirements.txt.
 
