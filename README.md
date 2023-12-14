@@ -1,6 +1,6 @@
 ## JigsawGAN: Auxiliary Learning for Solving Jigsaw Puzzles With Generative Adversarial Networks
 
-This is the Pytorch implementation of our TIP 2021 paper [JigsawGAN](http://liushuaicheng.org/TIP/SDPGAN/SDPGAN-TIP.pdf).
+This is the Pytorch implementation of our TIP 2021 paper [JigsawGAN](https://liru0126.github.io/collections/2021_tip/tip2021.pdf).
 
 ![image](./figs/pipeline.png)
 
