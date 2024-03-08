@@ -8,12 +8,11 @@ from torchvision import transforms
 import utils
 from models import networks
 from data import jigsaw_data_helper
-from torch.utils.tensorboard import SummaryWriter
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', required=False, default='project_name',  help='')
 parser.add_argument('--data_path', required=False, default='data_path',  help='data path')
-parser.add_argument('--vgg_model', required=False, default='pre_trained_VGG19_model_path/vgg19.pth', help='pre-trained VGG19 model path')
 parser.add_argument('--in_ngc', type=int, default=3, help='input channel for generator')
 parser.add_argument('--out_ngc', type=int, default=3, help='output channel for generator')
 parser.add_argument('--in_ndc', type=int, default=3, help='input channel for discriminator')
@@ -25,12 +24,10 @@ parser.add_argument('--ndf', type=int, default=32)
 parser.add_argument('--nb', type=int, default=8, help='the number of resnet block layer for generator')
 parser.add_argument('--input_size', type=int, default=64, help='input size')
 parser.add_argument('--train_epoch', type=int, default=200)
-parser.add_argument('--pre_train_epoch', type=int, default=10)
 parser.add_argument('--lrD', type=float, default=0.0002, help='learning rate, default=0.0002')
 parser.add_argument('--lrG', type=float, default=0.0002, help='learning rate, default=0.0002')
 parser.add_argument("--jigsaw_n_classes", "-jc", type=int, default=10, help='Number of classes for the jigsaw task')
 parser.add_argument("--bias_whole_image", default=0.0, type=float, help='If set, will bias the training procedure to show more often the whole image')
-parser.add_argument('--con_lambda', type=float, default=0.25, help='lambda for content loss')
 parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for Adam optimizer')
 parser.add_argument('--beta2', type=float, default=0.999, help='beta2 for Adam optimizer')
 parser.add_argument('--latest_generator_model', required=False, default='', help='the latest trained model path')
@@ -92,17 +89,13 @@ if args.latest_discriminator_model != '':
         D.load_state_dict(torch.load(args.latest_discriminator_model, map_location=lambda storage, loc: storage))
 
 
-VGG = networks.VGG19(init_weights=args.vgg_model, feature_mode=True)
 G.to(device)
 D.to(device)
-VGG.to(device)
 G.train()
 D.train()
-VGG.eval()
 print('---------- Networks initialized -------------')
 utils.print_network(G)
 utils.print_network(D)
-utils.print_network(VGG)
 print('-----------------------------------------------')
 
 # loss
@@ -117,26 +110,23 @@ D_optimizer = optim.Adam(D.parameters(), lr=args.lrD, betas=(args.beta1, args.be
 G_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=G_optimizer, milestones=[args.train_epoch // 2, args.train_epoch // 4 * 3], gamma=0.1)
 D_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=D_optimizer, milestones=[args.train_epoch // 2, args.train_epoch // 4 * 3], gamma=0.1)
 
-
 train_hist = {}
 train_hist['Disc_loss'] = []
 train_hist['Gen_loss'] = []
 train_hist['Jig_loss'] = []
 train_hist['Bou_loss'] = []
-train_hist['per_epoch_time'] = []
 train_hist['total_time'] = []
 print('training start!')
 start_time = time.time()
 
-writer = SummaryWriter(os.path.join(args.name + '_results', 'logs'))
 
 flows = torch.from_numpy(utils.read_flows(args.grid_size, args.jigsaw_n_classes)).to(device)
 real = torch.ones(args.batch_size, 1, math.ceil(args.input_size / 4), math.ceil(args.input_size / 4)).to(device)
 fake = torch.zeros(args.batch_size, 1, math.ceil(args.input_size / 4), math.ceil(args.input_size / 4)).to(device)
+
 for epoch in range(args.train_epoch):
 
     epoch_start_time = time.time()
-    G.train()
     G_scheduler.step()
     D_scheduler.step()
     Disc_losses = []
@@ -210,6 +200,7 @@ for epoch in range(args.train_epoch):
         
         Gen_loss.backward()
         G_optimizer.step()
+        
 
     per_epoch_time = time.time() - epoch_start_time
     train_hist['per_epoch_time'].append(per_epoch_time)
