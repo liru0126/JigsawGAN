@@ -181,8 +181,9 @@ for epoch in range(args.train_epoch):
         D_fake = D(G_)
         D_fake_loss = MSE_loss(D_fake, real)
 
-        # jigsaw loss
-        Jig_loss = CE_loss(jig_logit, jig_l)
+        # To DO: jigsaw loss
+        # Jig_loss = CE_loss(jig_logit, jig_ref)  # this line corresponds to the paper
+        Jig_loss = CE_loss(jig_logit, jig_l)  # you can use this line for better performance.
 
         # boundary loss
         Bou_loss = Bou_loss(G_)
