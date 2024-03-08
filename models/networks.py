@@ -219,21 +219,7 @@ class Transformer(nn.Module):
         self.conv03_2 = nn.Conv2d(256, 256, 3, 1, 1)
         self.in03_1 = InstanceNormalization(256)
         # relu
-
-        # self.refpad01_c1 = nn.ReflectionPad2d(in_nc)
-        # self.conv01_c1 = nn.Conv2d(in_nc, nf, 7)
-        # self.in01_c1 = InstanceNormalization(64)
-        # # relu
-        # # self.refpad02_1 = nn.ReflectionPad2d(3)
-        # self.conv02_c1 = nn.Conv2d(64, 128, 3, 2, 1)
-        # self.conv02_c2 = nn.Conv2d(128, 128, 3, 1, 1)
-        # self.in02_c1 = InstanceNormalization(128)
-        # # relu
-        # # self.refpad03_1 = nn.ReflectionPad2d(1)
-        # self.conv03_c1 = nn.Conv2d(128, 256, 3, 2, 1)
-        # self.conv03_c2 = nn.Conv2d(256, 256, 3, 1, 1)
-        # self.in03_c1 = InstanceNormalization(256)
-        # # relu
+        
 
         self.classifier_conv4 = nn.Conv2d(256, 384, kernel_size=3, padding=1)
         # relu
@@ -253,7 +239,6 @@ class Transformer(nn.Module):
         self.classifier_drop7 = nn.Dropout() if dropout else Id()
 
         self.jigsaw_classifier = nn.Linear(512, jigsaw_classes+1)
-
 
         ## res block 1
         self.refpad04_1 = nn.ReflectionPad2d(1)
@@ -349,23 +334,13 @@ class Transformer(nn.Module):
         # tanh
 
 
-    def forward(self, x, jig_l, flows):
+    def forward(self, x, flows):
 
         output = []
 
         y = F.relu(self.in01_1(self.conv01_1(self.refpad01_1(x))))
         y = F.relu(self.in02_1(self.conv02_2(self.conv02_1(y))))
         t04_ori = F.relu(self.in03_1(self.conv03_2(self.conv03_1(y))))
-
-        # t04_cat = [None] * self.grid_size
-        # for n in range(self.grid_size):
-        #     for m in range(self.grid_size - 1):
-        #         t04_cat[n] = torch.cat((t04_ori[n * self.grid_size + m, :, :, :], t04_ori[n * self.grid_size + m + 1, :, :, :]), 2)
-        #
-        # t04_1cat2 = [None]
-        # for n in range(self.grid_size - 1):
-        #     t04_1cat2 = torch.cat((t04_cat[n], t04_cat[n + 1]), 1)
-        # t04_cla = t04_1cat2.unsqueeze(0)
 
         t04_cat = [None] * self.grid_size
         for n in range(self.grid_size):
@@ -375,30 +350,8 @@ class Transformer(nn.Module):
         t04_1cat2 = torch.cat((t04_cat[0], t04_cat[1]), 1)
         t04_cla = t04_1cat2.unsqueeze(0)
 
-        # y_c = F.relu(self.in01_c1(self.conv01_c1(self.refpad01_c1(x))))
-        # y_c = F.relu(self.in02_c1(self.conv02_c2(self.conv02_c1(y_c))))
-        # t04_cla = F.relu(self.in03_c1(self.conv03_c2(self.conv03_c1(y_c))))
-        #
-        # classifier_04= self.classifier_pool4(F.relu(self.classifier_conv4(t04_cla)))
-        # classifier_05 = self.classifier_pool5(F.relu(self.classifier_conv5(classifier_04)))
-        # classifier_06 = self.classifier_pool6(F.relu(self.classifier_conv6(classifier_05)))
-        #
-        # classifier_06 = classifier_06.view(classifier_06.size(0), -1)
-        # classifier_06_2 = self.classifier_drop6(F.relu(self.classifier_fc6(classifier_06)))
-        # classifier_07 = self.classifier_drop7(F.relu(self.classifier_fc7(classifier_06_2)))
-        # classifier_jigsaw = self.jigsaw_classifier(classifier_07)
-        # output.append(classifier_jigsaw)
-        #
-        # classifier_jigsaw_sf = F.softmax(classifier_jigsaw, dim=1)
-        # order = classifier_jigsaw_sf.argmax()
-        #
-        # import pdb
-        # pdb.set_trace()
-
+        jig_l = self.jigsaw_classifier(t04_cla)
         output.append(jig_l)
-
-        # import pdb
-        # pdb.set_trace()
 
         flow = flows[jig_l]
         src_p = flow.repeat_interleave(8, 2).repeat_interleave(8, 3).float()
