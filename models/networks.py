@@ -138,7 +138,7 @@ def get_grid(batch_size, H, W, start=0):
     yy = yy.view(1, 1, H, W).repeat(batch_size, 1, 1, 1)
     ones = torch.ones_like(xx).cuda() if torch.cuda.is_available() else torch.ones_like(xx)
     grid = torch.cat((xx, yy, ones), 1).float()
-    grid[:, :2, :, :] = grid[:, :2, :, :] + start  # 加上patch在原图内的偏移量
+    grid[:, :2, :, :] = grid[:, :2, :, :] + start 
     return grid
 
 
@@ -220,7 +220,6 @@ class Transformer(nn.Module):
         self.in03_1 = InstanceNormalization(256)
         # relu
         
-
         self.classifier_conv4 = nn.Conv2d(256, 384, kernel_size=3, padding=1)
         # relu
         self.classifier_pool4 = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
@@ -239,6 +238,7 @@ class Transformer(nn.Module):
         self.classifier_drop7 = nn.Dropout() if dropout else Id()
 
         self.jigsaw_classifier = nn.Linear(512, jigsaw_classes+1)
+
 
         ## res block 1
         self.refpad04_1 = nn.ReflectionPad2d(1)
@@ -350,8 +350,18 @@ class Transformer(nn.Module):
         t04_1cat2 = torch.cat((t04_cat[0], t04_cat[1]), 1)
         t04_cla = t04_1cat2.unsqueeze(0)
 
-        jig_l = self.jigsaw_classifier(t04_cla)
-        output.append(jig_l)
+        classifier_04= self.classifier_pool4(F.relu(self.classifier_conv4(t04_cla)))
+        classifier_05 = self.classifier_pool5(F.relu(self.classifier_conv5(classifier_04)))
+        classifier_06 = self.classifier_pool6(F.relu(self.classifier_conv6(classifier_05)))
+        
+        classifier_06 = classifier_06.view(classifier_06.size(0), -1)
+        classifier_06_2 = self.classifier_drop6(F.relu(self.classifier_fc6(classifier_06)))
+        classifier_07 = self.classifier_drop7(F.relu(self.classifier_fc7(classifier_06_2)))
+        classifier_jigsaw = self.jigsaw_classifier(classifier_07)
+        output.append(classifier_jigsaw)
+        
+        classifier_jigsaw_sf = F.softmax(classifier_jigsaw, dim=1)
+        jig_l = classifier_jigsaw_sf.argmax()
 
         flow = flows[jig_l]
         src_p = flow.repeat_interleave(8, 2).repeat_interleave(8, 3).float()
