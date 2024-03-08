@@ -29,27 +29,4 @@ if __name__ == "__main__":
 
     np.save(outname, flow_4_2)
 
-    # P_hat = np.array(list(itertools.permutations(list(range(4)), 4)))
-    # n = P_hat.shape[0]
-    #
-    # for i in trange(args.classes):
-    #     if i==0:
-    #         j = np.random.randint(n)
-    #         P = np.array(P_hat[j]).reshape([1,-1])
-    #     else:
-    #         P = np.concatenate([P,P_hat[j].reshape([1,-1])],axis=0)
-    #
-    #     P_hat = np.delete(P_hat,j,axis=0)
-    #     D = cdist(P,P_hat, metric='hamming').mean(axis=0).flatten()
-    #
-    #     if args.selection=='max':
-    #         j = D.argmax()
-    #     else:
-    #         m = int(D.shape[0]/2)
-    #         S = D.argsort()
-    #         j = S[np.random.randint(m-10,m+10)]
-    #
-    #     if i%100==0:
-    #         np.save(outname,P)
-
     print('file created --> '+outname)
