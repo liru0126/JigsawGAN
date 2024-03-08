@@ -183,12 +183,13 @@ for epoch in range(args.train_epoch):
 
         # To DO: jigsaw loss
         # Jig_loss = CE_loss(jig_logit, jig_ref)  # this line corresponds to the paper
-        Jig_loss = CE_loss(jig_logit, jig_l)  # you can use this line for better performance.
+        Jig_loss = CE_loss(jig_logit, jig_l)  # using this line for better performance.
 
-        # boundary loss
+        # To Do: boundary loss
         Bou_loss = Bou_loss(G_)
 
         Gen_loss = D_fake_loss + Jig_loss + Bou_loss
+        # Gen_loss = D_fake_loss + Jig_loss
 
         Jig_losses.append(Jig_loss.item())
         train_hist['Jig_loss'].append(Jig_loss.item())
