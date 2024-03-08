@@ -13,6 +13,10 @@ This is the Pytorch implementation of our TIP 2021 paper [JigsawGAN](https://lir
 
 ![image](./figs/results.png)
 
+## To do
+* Boundary loss
+* reference label
+
 
 ## Citation
 
