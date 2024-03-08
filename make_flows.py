@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Sep 14 15:50:28 2017
-
-@author: bbrattol
-"""
 import argparse
 from tqdm import trange
 import numpy as np
