@@ -120,8 +120,8 @@ D_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=D_optimizer, milestones=[
 train_hist = {}
 train_hist['Disc_loss'] = []
 train_hist['Gen_loss'] = []
-train_hist['Con_loss'] = []
 train_hist['Jig_loss'] = []
+train_hist['Bou_loss'] = []
 train_hist['per_epoch_time'] = []
 train_hist['total_time'] = []
 print('training start!')
@@ -164,51 +164,57 @@ for epoch in range(args.train_epoch):
         x_in = torch.stack(x_in, 0)
         x_in = x_in[:,0,:,:,:]
         x_in = x_in.to(device)
+        
+
+        # train D
+        D_optimizer.zero_grad()
+
+        D_real = D(y)
+        D_real_loss = MSE_loss(D_real, real)
+
+        jig_logit, G_ = G(x_in, flows)
+        
+        D_fake = D(G_)
+        D_fake_loss = MSE_loss(D_fake, fake)
+
+        Disc_loss = D_real_loss + D_fake_loss
+        Disc_losses.append(Disc_loss.item())
+        train_hist['Disc_loss'].append(Disc_loss.item())
+        
 
         # train G
         G_optimizer.zero_grad()
 
-        jig_logit, G_ = G(x_in, jig_l, flows)
+        jig_logit, G_ = G(x_in, flows)
 
-        # D_fake = D(G_)
-        # D_fake_loss = MSE_loss(D_fake, real)
+        D_fake = D(G_)
+        D_fake_loss = MSE_loss(D_fake, real)
 
-        Con_loss = 10 * MSE_loss(G_, y)
-        #Jig_loss = CE_loss(jig_logit, jig_l)
+        # jigsaw loss
+        Jig_loss = CE_loss(jig_logit, jig_l)
 
-        Gen_loss = Con_loss
+        # boundary loss
+        Bou_loss = Bou_loss(G_)
 
-        Con_losses.append(Con_loss.item())
-        train_hist['Con_loss'].append(Con_loss.item())
+        Gen_loss = D_fake_loss + Jig_loss + Bou_loss
+
+        Jig_losses.append(Jig_loss.item())
+        train_hist['Jig_loss'].append(Jig_loss.item())
+
+        Bou_losses.append(Bou_loss.item())
+        train_hist['Bou_loss'].append(Bou_loss.item())
 
         Gen_losses.append(Gen_loss.item())
         train_hist['Gen_loss'].append(Gen_loss.item())
-
-        # Jig_losses.append(Jig_loss.item())
-        # train_hist['Jig_loss'].append(Jig_loss.item())
-
+        
         Gen_loss.backward()
         G_optimizer.step()
 
-        if it % (len_train_loader // (10 * args.batch_size)) == 0:
-            print(
-                "Epoch[%d/%d], Progress:[%d/%d], Content loss: %.3f," % (
-                (epoch + 1), args.train_epoch, it, len_train_loader, Con_loss.item()))
-
-            with torch.no_grad():
-                img_grid_real = torchvision.utils.make_grid(x, normalize=True)
-                img_grid_fake = torchvision.utils.make_grid(G_, normalize=True)
-                writer.add_image('Real Iamges', img_grid_real, it + epoch * len_train_loader)
-                writer.add_image('Fake Iamges', img_grid_fake, it + epoch * len_train_loader)
-
-            writer.add_scalar('Generator Loss', Con_loss.item(), it + epoch * len_train_loader)
-
     per_epoch_time = time.time() - epoch_start_time
     train_hist['per_epoch_time'].append(per_epoch_time)
-    print('[%d/%d] - time: %.2f, Gen loss: %.3f, Con loss: %.3f' % (
-    (epoch + 1), args.train_epoch, per_epoch_time,
-    torch.mean(torch.FloatTensor(Gen_losses)),
-    torch.mean(torch.FloatTensor(Con_losses))))
+    print(
+    '[%d/%d] - time: %.2f, Disc loss: %.3f, Gen loss: %.3f, Jig loss: %.3f，Bou loss: %.3f' % ((epoch), args.train_epoch, per_epoch_time, torch.mean(torch.FloatTensor(Disc_losses)),
+        torch.mean(torch.FloatTensor(Gen_losses)), torch.mean(torch.FloatTensor(Jig_losses)), torch.mean(torch.FloatTensor(Bou_losses))))
 
     if epoch % 10 == 1 or epoch == args.train_epoch - 1:
         with torch.no_grad():
@@ -229,9 +235,8 @@ for epoch in range(args.train_epoch):
                 x_in = torch.stack(x_in, 0)
                 x_in = x_in[:, 0, :, :, :]
                 x_in = x_in.to(device)
-                _, G_recon = G(x_in, jig_l, flows)
+                _, G_recon = G(x_in, flows)
                 G_recon_rgb = G_recon[:, [2, 1, 0], :, :]
-                # print("Outside: input size", x.size(), "output_size", G_recon.size())
                 result = torch.cat((x[0], G_recon_rgb[0]), 2)
                 path = os.path.join(args.name + '_results', 'Transfer',
                                     str(epoch + 1) + '_epoch_' + args.name + '_train_' + str(n + 1) + '.png')
