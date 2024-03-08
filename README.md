@@ -15,6 +15,7 @@ This is the Pytorch implementation of our TIP 2021 paper [JigsawGAN](https://lir
 
 ## To do
 * Reference label
+* Bou loss
 
 
 ## Citation
