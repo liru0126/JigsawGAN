@@ -109,6 +109,7 @@ print('-----------------------------------------------')
 MSE_loss = nn.MSELoss().to(device)
 L1_loss = nn.L1Loss().to(device)
 CE_loss = nn.CrossEntropyLoss().to(device)
+Bou_loss = pytorch_ssim.SSIM().to(device)
 
 # Adam optimizer
 G_optimizer = optim.Adam(G.parameters(), lr=args.lrG, betas=(args.beta1, args.beta2))
