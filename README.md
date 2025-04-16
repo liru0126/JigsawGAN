@@ -14,7 +14,7 @@ This is the Pytorch implementation of our TIP 2021 paper [JigsawGAN](https://lir
 ![image](./figs/results.png)
 
 ## To do
-* Reference label
+* Reference label (Please refer to [JigswPuzzle](https://github.com/MahdiHajiabadi/JigsawPuzzle))
 * Bou loss
 
 
